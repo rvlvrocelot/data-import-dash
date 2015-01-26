@@ -1,0 +1,39 @@
+This document will spell out the Jin government structure, the national laws that are enforceable throughout the nation, and the local laws of Zhongdu which will serve as the default set of local laws for townships and unincorporated land. The Jin government structure is divided into two sets of laws: national laws and local laws. This structure is designed to afford many rights to local townships, while providing a core set of values for the nation. 
+
+National Government Structure:
+	Governor: The governor, Lizardbison will serve as the chief executive for the nation, as well as the mayor of the nation’s capital Zhongdu.
+	Mayors: Mayors will be appointed by the governor when a new township is created. They serve as the administrator of the townships that they create.
+
+Legislation:
+	Mayors of townships and the governor are the only individuals granted privileges of creating legislation for national laws and voting for these laws. Laws will pass on a majority vote. The governor has the power to veto a law, but the veto can be overturned by 2/3 majority of all voting parties. Mayors have the power to create local legislation at will, as long as they don’t conflict with national laws.
+
+Special Privileges:
+	The Governor has the power to create new townships and appoint Mayors. These powers may also be carried out by all voting parties on a 2/3 majority vote. Mayors can also be removed by the governor. The removal of a mayor can be overturned by a 2/3 majority vote of all voting parties.
+
+National laws:
+	No murder.
+	No assault or attempted murder.
+	No thievery.
+	No illegal trespassing.
+	Jin flag must be displayed outside all buildings.
+	The governor or any mayors cannot be expedited without the express consent of the governor.
+	No illegal underground passages into the territory.
+	No possession of TNT by any non administrator.
+	No defacing or destruction of property.
+
+
+Default Local Laws:
+	No mining or farming by non-citizens.
+	No construction by non-citizens.
+	Construction by citizens must be done in plots made by administrator.
+	Farming projects by citizens must be done in plots made by administrator.
+	
+Enforceability of laws:
+	Laws may be enforced by any mayor or the governor at their discretion. Punishments may be overturned, increased, or reduced by governor.
+
+Definition of territory:
+	The Jin territory is defined as all the land in the negative x direction past -20 x
+  
+	
+	
+

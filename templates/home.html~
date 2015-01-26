@@ -1,0 +1,62 @@
+{%extends "layout.html"%}
+
+{%block content%}
+
+<!-- <div >
+  <div class=metanav>
+  {% if not session.logged_in %}
+    <a href="{{ url_for('login') }}">log in</a>
+  {% else %}
+    <a href="{{ url_for('logout') }}">log out</a>
+  {% endif %}
+  {% if session.logged_in %}
+ g
+  {% endif %}
+  </div>
+  <br>
+  {% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+    <br>
+  {% endfor %}
+
+</div>
+ -->
+
+
+  {% if session.logged_in %}
+
+<br><br><br>
+
+<h1>Announcements!</h1>
+
+<br>
+
+ <ul class=entries>
+  {% for entry in entries %}
+    <li><h2>{{ entry.announcement }} </h2> <small>by {{entry.user}} on {{entry.timestamp}} UTC</small> 
+    {% if entry.nation == "Stonevail" %}
+    	<img src = "/static/StoneVail.png" width="40">
+    {% else %}
+	<img src = "/static/zhongdu.png" width="40" >
+    {% endif %}
+    <br> {{ entry.details|safe }}
+  {% else %}
+    <li><em>Unbelievable.  No entries here so far</em>
+  {% endfor %}
+  </ul>
+
+    <form action="{{ url_for('add_announcement') }}" method=post class=add-entry>
+      <dl>
+	<dt>Announcement Title:
+	<dd><input type =text size=30 name=announcement > <input type=hidden name=user value={{session.user}}>
+	<dt>Details:
+	<dd><textarea name=details rows=3 cols=30 >
+</textarea>
+        <dd><input type=submit value=Submit>
+      </dl>
+    </form>
+
+
+{% endif %}
+
+{% endblock %}

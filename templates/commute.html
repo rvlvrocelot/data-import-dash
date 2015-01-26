@@ -1,0 +1,52 @@
+{%extends "layout.html"%}
+
+{%block content%}
+
+<!-- <div >
+  <div class=metanav>
+  {% if not session.logged_in %}
+    <a href="{{ url_for('login') }}">log in</a>
+  {% else %}
+    <a href="{{ url_for('logout') }}">log out</a>
+  {% endif %}
+  {% if session.logged_in %}
+ g
+  {% endif %}
+  </div>
+  <br>
+  {% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+    <br>
+  {% endfor %}
+
+</div>
+ -->
+
+
+  {% if session.logged_in %}
+
+<br><br><br>
+
+<h1>Enter commute info</h1>
+
+
+    <form action="{{ url_for('commuteupdate') }}" method=post class=add-entry>
+      <dl>
+	<dt>Time:
+	<dd><textarea name=commuteTime rows=3 cols=30 ></textarea>
+  <dt>Train:
+  <dd><textarea name=train rows=3 cols=30 ></textarea>
+	<dt>Comment:
+	<dd><textarea name=comment rows=3 cols=30 ></textarea>
+  <select name=trip>
+  <option value="work">To Work</option>
+  <option value="home">To Home</option>
+  </select>
+        <dd><input type=submit value=Submit>
+      </dl>
+    </form>
+
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{%extends "layout.html"%}
+
+{%block content%}
+
+<!-- <div >
+  <div class=metanav>
+  {% if not session.logged_in %}
+    <a href="{{ url_for('login') }}">log in</a>
+  {% else %}
+    <a href="{{ url_for('logout') }}">log out</a>
+  {% endif %}
+  {% if session.logged_in %}
+ g
+  {% endif %}
+  </div>
+  <br>
+  {% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+    <br>
+  {% endfor %}
+
+</div>
+ -->
+
+
+  {% if session.logged_in %}
+
+<br><br><br>
+
+<h1>Laws!</h1>
+
+<br>
+
+<a >
+
+
+{% endif %}
+
+{% endblock %}
