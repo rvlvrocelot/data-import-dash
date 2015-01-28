@@ -11,7 +11,15 @@
 
 <h2>Import Asset</h2>
 
-Last Run: 1/20/2015
+
+<br>Latest PeriodIdCreated: {{ latestAssetDate }}
+
+<br>Assets Imported This Month: {{ getAssetsUpdatedThisMonth }}
+
+<br>
+<img src = "/static/asset.png" width="500">
+ 
+
 
 </div>
 
@@ -21,7 +29,23 @@ Last Run: 1/20/2015
 
 Last Run: 1/23/2015
 
+<br>
+
+<button id="portfolio" class="float-left submit-button" >Run Import Portfolio</button>
+
+
+
 </div>
 
+<script type="text/javascript">
+    document.getElementById("portfolio").onclick = function () {
+        location.href = "/";
+    };
+
+        document.getElementById("asset").onclick = function () {
+        location.href = "/";
+    };
+</script>
 
 {% endblock %}
+

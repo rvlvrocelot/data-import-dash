@@ -6,6 +6,7 @@ from flask import Flask, request, session, g, redirect, url_for, \
 from contextlib import closing
 from flask_bootstrap import Bootstrap
 import hashlib
+import SQLHelper
 
 # configuration
 # the database is not in tmp on the deployed verson
@@ -50,7 +51,13 @@ def teardown_request(exception):
 #Load the homepage where the announcements are displayed
 @app.route('/')
 def ODS():
-    return render_template('ODS.html')
+
+    latestAssetDate = SQLHelper.getLatestAssetDate()
+    getAssetsUpdatedThisMonth = SQLHelper.getAssetsUpdatedThisMonth(latestAssetDate)
+
+    SQLHelper.generateAssetGraph(latestAssetDate)
+
+    return render_template('ODS.html',latestAssetDate= latestAssetDate, getAssetsUpdatedThisMonth = getAssetsUpdatedThisMonth)
 
 
 
