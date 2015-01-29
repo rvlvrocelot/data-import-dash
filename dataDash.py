@@ -16,7 +16,6 @@ SECRET_KEY = 'development key'
 USERNAME = 'admin'
 PASSWORD = 'default'
 
-
 # create our little application :)
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -37,7 +36,6 @@ def runScript(scriptName):
             db.cursor().executescript(f.read()) 
         db.commit()
 
-
 @app.before_request
 def before_request():
     g.db = connect_db()
@@ -53,13 +51,27 @@ def teardown_request(exception):
 def ODS():
 
     latestAssetDate = SQLHelper.getLatestAssetDate()
-    getAssetsUpdatedThisMonth = SQLHelper.getAssetsUpdatedThisMonth(latestAssetDate)
+    AssetsUpdatedThisMonth = SQLHelper.getAssetsUpdatedThisMonth(latestAssetDate)
+    NewFundsThisMonth = SQLHelper.getNewFundsThisMonth()
 
     SQLHelper.generateAssetGraph(latestAssetDate)
+    SQLHelper.generateNewFundsGraph()
 
-    return render_template('ODS.html',latestAssetDate= latestAssetDate, getAssetsUpdatedThisMonth = getAssetsUpdatedThisMonth)
+    f = open("previous.txt","r")
+    previous = f.readline()
+    f.close()
 
+    fundsSinceRefresh = int(NewFundsThisMonth) - int(previous)
 
+    f = open("previous.txt","w")
+    f.write(str(NewFundsThisMonth))
+    f.close()
+
+    return render_template('ODS.html',latestAssetDate= latestAssetDate, AssetsUpdatedThisMonth = AssetsUpdatedThisMonth, NewFundsThisMonth= NewFundsThisMonth, fundsSinceRefresh = fundsSinceRefresh)
+
+@app.route('/ICRA')
+def ICRA():
+        return render_template('ICRA.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')

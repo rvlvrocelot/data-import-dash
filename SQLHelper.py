@@ -4,6 +4,7 @@ import datetime
 import dateutil.relativedelta
 import numpy as np
 import matplotlib.pyplot as plt
+import calendar
 
 
 
@@ -37,7 +38,7 @@ def generateAssetGraph(date):
 	monthsList.append(d.strftime("%Y%m"))
 	countlist.append(getAssetsUpdatedThisMonth(d.strftime("%Y%m")))
 
-	for x in range(5):
+	for x in range(8):
 		d = d - dateutil.relativedelta.relativedelta(months=1)
 		monthsList.append(str(d.strftime("%Y%m")))
 		countlist.append(getAssetsUpdatedThisMonth(d.strftime("%Y%m")))
@@ -46,7 +47,7 @@ def generateAssetGraph(date):
 	monthsList.reverse()
 
 	width = .35
-	ind = np.arange(6)
+	ind = np.arange(9)
 	fig, ax = plt.subplots()
 	ax.bar(ind, countlist, width, color='r')
 	ax.set_ylabel('Assets updated')
@@ -54,3 +55,47 @@ def generateAssetGraph(date):
 	ax.set_xticks(ind+width)
 	ax.set_xticklabels( monthsList )
 	plt.savefig("./Static/asset")
+
+
+def getNewFundsThisMonth(d = datetime.datetime.now()):
+
+	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siGlobalResearch;Trusted_Connection=yes')
+	cursor = cnxn.cursor()
+	d = d.replace(day = 1)
+	d2 = d + dateutil.relativedelta.relativedelta(months=1)
+
+	d = d.strftime("%m-%d-%Y")
+	d2 = d2.strftime("%m-%d-%Y")
+
+	cursor.execute("SELECT COUNT(*) count FROM dbo.siFund WHERE dCreated >= '%s' and dCreated <= '%s' " % (str(d), str(d2)))
+	result = cursor.fetchall()
+
+	for row in result:
+	    return row.count
+
+def generateNewFundsGraph(date = datetime.datetime.now()):
+
+	d = date
+	monthsList = []
+	countlist = []
+
+	monthsList.append(d.strftime("%Y%m"))
+	countlist.append(getNewFundsThisMonth())
+
+	for x in range(8):
+		d = d - dateutil.relativedelta.relativedelta(months=1)
+		monthsList.append(str(d.strftime("%Y%m")))
+		countlist.append(getNewFundsThisMonth(d))
+
+	countlist.reverse()
+	monthsList.reverse()
+
+	width = .35
+	ind = np.arange(9)
+	fig, ax = plt.subplots()
+	ax.bar(ind, countlist, width, color='r')
+	ax.set_ylabel('New funds')
+	ax.set_title('New funds per month')
+	ax.set_xticks(ind+width)
+	ax.set_xticklabels( monthsList )
+	plt.savefig("./Static/newFunds")
