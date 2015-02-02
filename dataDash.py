@@ -71,6 +71,7 @@ def ODS():
 
 @app.route('/ICRA')
 def ICRA():
+        SQLHelper.generateICRAGraph()
         return render_template('ICRA.html')
 
 if __name__ == '__main__':
