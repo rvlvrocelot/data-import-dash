@@ -11,6 +11,18 @@ import calendar
 cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siVendors;Trusted_Connection=yes')
 cursor = cnxn.cursor()
 
+def generateGraph(x,y,title,ylable,destination,N=9):
+	width = .35
+	ind = np.arange(N)
+	fig, ax = plt.subplots()
+	ax.bar(ind, y, width, color='r')
+	ax.set_ylabel(ylable)
+	ax.set_title(title)
+	ax.set_xticks(ind+width)
+	ax.set_xticklabels( x )
+	plt.savefig(destination)
+
+
 
 def getAssetsUpdatedThisMonth(date):
 
@@ -46,16 +58,7 @@ def generateAssetGraph(date):
 	countlist.reverse()
 	monthsList.reverse()
 
-	width = .35
-	ind = np.arange(9)
-	fig, ax = plt.subplots()
-	ax.bar(ind, countlist, width, color='r')
-	ax.set_ylabel('Assets updated')
-	ax.set_title('Assets updated per month')
-	ax.set_xticks(ind+width)
-	ax.set_xticklabels( monthsList )
-	plt.savefig("./Static/asset")
-
+	generateGraph(monthsList,countlist,'Assets updated per month','Assets updated',"./Static/asset")
 
 def getNewFundsThisMonth(d = datetime.datetime.now()):
 
@@ -90,12 +93,4 @@ def generateNewFundsGraph(date = datetime.datetime.now()):
 	countlist.reverse()
 	monthsList.reverse()
 
-	width = .35
-	ind = np.arange(9)
-	fig, ax = plt.subplots()
-	ax.bar(ind, countlist, width, color='r')
-	ax.set_ylabel('New funds')
-	ax.set_title('New funds per month')
-	ax.set_xticks(ind+width)
-	ax.set_xticklabels( monthsList )
-	plt.savefig("./Static/newFunds")
+	generateGraph(monthsList,countlist,'New funds per month','New funds',"./Static/newFunds")
