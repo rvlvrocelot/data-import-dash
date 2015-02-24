@@ -52,8 +52,8 @@ def ODS():
 
     latestAssetDate = SQLHelper.getLatestAssetDate()
     AssetsUpdatedThisMonth = SQLHelper.getAssetsUpdatedThisMonth(latestAssetDate)
-    NewFundsThisMonth = SQLHelper.getNewFundsThisMonth()
-
+    NewFundsThisMonth = SQLHelper.getNewFundsThisMonth()   
+    NewFundsThisMonth = sum(NewFundsThisMonth)
     SQLHelper.generateAssetGraph(latestAssetDate)
     SQLHelper.generateNewFundsGraph()
 
@@ -61,19 +61,34 @@ def ODS():
     previous = f.readline()
     f.close()
 
-    fundsSinceRefresh = int(NewFundsThisMonth) - int(previous)
+    fundsSinceRefresh = NewFundsThisMonth - int(previous)
 
     f = open("previous.txt","w")
     f.write(str(NewFundsThisMonth))
     f.close()
 
-    return render_template('ODS.html',latestAssetDate= latestAssetDate, AssetsUpdatedThisMonth = AssetsUpdatedThisMonth, NewFundsThisMonth= NewFundsThisMonth, fundsSinceRefresh = fundsSinceRefresh)
+
+    return render_template('ODS.html',latestAssetDate= latestAssetDate, AssetsUpdatedThisMonth = AssetsUpdatedThisMonth, NewFundsThisMonth = NewFundsThisMonth, fundsSinceRefresh = fundsSinceRefresh)
 
 @app.route('/ICRA')
 def ICRA():
-        SQLHelper.generateICRAGraph()
-        return render_template('ICRA.html')
+    SQLHelper.generateICRAGraphRawDB()
+    SQLHelper.generateICRAGraph()
+    return render_template('ICRA.html')
+
+@app.route('/CBSO')
+def CBSO():
+    managersLeft = SQLHelper.getFundManagersLeft()
+    return render_template('CBSO.html', managersLeft=managersLeft)
+
+@app.route('/IE')
+def IE():
+    return render_template('IE.html')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
 
+@app.route('/hindsight')
+def Hindsight():
+    pass

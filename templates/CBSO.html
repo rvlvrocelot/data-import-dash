@@ -1,0 +1,30 @@
+{%extends "layout.html"%}
+
+{%block content%}
+
+<br><br><br>
+
+
+<h1>CBSO</h1>
+
+<div class="col-md-6">
+
+	<h2>Managers left to process</h2>
+
+	<ul>
+		{% for manager in managersLeft %}
+
+		<li>{{manager[0]}}</li>
+
+		{%endfor%}
+	</ul>
+</div>
+
+<div class="col-md-6">
+
+	Other stuff I guess
+
+</div>
+
+
+{% endblock %}
