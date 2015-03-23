@@ -56,6 +56,7 @@ def ODS():
     NewFundsThisMonth = sum(NewFundsThisMonth)
     SQLHelper.generateAssetGraph(latestAssetDate)
     SQLHelper.generateNewFundsGraph()
+    SQLHelper.generateAssetMonthly(latestAssetDate)
 
     f = open("previous.txt","r")
     previous = f.readline()
@@ -66,7 +67,6 @@ def ODS():
     f = open("previous.txt","w")
     f.write(str(NewFundsThisMonth))
     f.close()
-
 
     return render_template('ODS.html',latestAssetDate= latestAssetDate, AssetsUpdatedThisMonth = AssetsUpdatedThisMonth, NewFundsThisMonth = NewFundsThisMonth, fundsSinceRefresh = fundsSinceRefresh)
 
@@ -83,7 +83,8 @@ def CBSO():
 
 @app.route('/IE')
 def IE():
-    return render_template('IE.html')
+    fundCodes = SQLHelper.getDuplicateFundCodes()
+    return render_template('IE.html',fundCodes=fundCodes)
 
 
 if __name__ == '__main__':

@@ -10,6 +10,8 @@ import time
 cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siVendors;Trusted_Connection=yes')
 cursor = cnxn.cursor()
 
+#generate a bar graph
+
 def generateGraph(x,y,title,ylable,destination,N=9):
 	width = .35
 	ind = np.arange(N)
@@ -22,6 +24,9 @@ def generateGraph(x,y,title,ylable,destination,N=9):
 	plt.xticks(rotation=70)
 	plt.gcf().subplots_adjust(bottom=0.15)
 	plt.savefig(destination)
+	plt.clf()
+
+#generate a stack graph
 
 def generateStackedGraph(x,y,title,ylable,legend,destination,N=9):
     
@@ -43,9 +48,11 @@ def generateStackedGraph(x,y,title,ylable,legend,destination,N=9):
     ax.set_xticklabels( x )
     plt.xticks(rotation=70)
     plt.gcf().subplots_adjust(bottom=0.15)
-    plt.legend(barlist,legend)
-    plt.savefig(destination)
+    lgd = plt.legend(barlist,legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.savefig(destination, bbox_extra_artists=(lgd,), bbox_inches='tight')
+    plt.clf()
 
+#function to generate a trailing monthly list and execute a general query function on those months. Used by most of the processing
 
 def generateTrailingMonthlyLists(QueryFunction,months,date):
     monthsList = []
@@ -64,10 +71,11 @@ def generateTrailingMonthlyLists(QueryFunction,months,date):
 
     return monthsList,countlist    
 
+#ASSET PROCESSING
 
 def getAssetsUpdatedThisMonth(date = datetime.datetime.now()):
 	date = date.strftime("%Y%m")
-	cursor.execute("SELECT count(*) count FROM LIG.Asset WHERE PeriodIDCreated = '%s' "%date)
+	cursor.execute("SELECT count(*) count FROM LIG.Asset WHERE PeriodIDCreated = '%s' AND AssetValue IS NOT NULL "%date)
 	result = cursor.fetchall()
 
 	for row in result:
@@ -80,13 +88,58 @@ def getLatestAssetDate():
 	for row in result:
 	    return datetime.datetime.strptime(str(row.PeriodIDCreated), "%Y%m")
 
-
 def generateAssetGraph(date):
 
 	monthsback = 12
 
 	mon, coun = generateTrailingMonthlyLists(getAssetsUpdatedThisMonth,monthsback,date)
 	generateGraph(mon,coun,'Assets updated per month','Assets updated',"./Static/asset",monthsback)
+
+#ASSET THIS MONTH PROCESSING
+
+def generateAssetMonthly(latestAssetDate):
+	print "hey"
+	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siVendors;Trusted_Connection=yes')
+	cursor = cnxn.cursor()
+
+	assetsUpdatedList = []
+
+	year =  latestAssetDate.year
+	month = latestAssetDate.month
+	periodid = latestAssetDate.strftime("%Y%m")
+	print periodid
+	dayrange = calendar.monthrange(year,month)[1]
+
+	
+	for y in range(1,dayrange):
+	           
+
+	    cursor.execute('''
+
+	        SELECT COUNT(*) count FROM siVendors.LIG.Asset
+	        WHERE PeriodIdCreated = '%s'
+	        AND AssetValue IS NOT NULL
+	        AND dCreated > '%s-%s-%s'
+	        AND dCreated < '%s-%s-%s'
+
+
+	    '''%(periodid,year,month+1,y-1,year,month+1,y))
+	    result = cursor.fetchall()
+	        
+	    for row in result:
+	        assetsUpdatedList.append(row.count)
+	    
+	print assetsUpdatedList
+	xaxis = range(len(assetsUpdatedList))
+	fig, ax = plt.subplots()
+	ax.set_ylabel("Assets updated")
+	ax.set_xlabel("Day")
+	ax.set_title("Assets updated by day this month")
+	plt.plot(xaxis, assetsUpdatedList, '-o')
+	plt.savefig("./Static/assetMonth")
+
+
+#NEW FUND PROCESSING
 
 def getNewFundsThisMonth(d = datetime.datetime.now()):
     cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siGlobalResearch;Trusted_Connection=yes')
@@ -125,6 +178,8 @@ def generateNewFundsGraph(date = datetime.datetime.now()):
     coun = zip(*coun)
     generateStackedGraph(mon,coun,"New Funds per month","New funds",["ASIA","OFF","EURO","NA","AUST"],"./Static/newFunds",N=monthsback)
 
+
+#ICRA processing
 
 def getICRAaddedThisMonthRawDB(d = datetime.datetime.now()):
 	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=RawDB;Trusted_Connection=yes')
@@ -167,6 +222,7 @@ def generateICRAGraph(date = datetime.datetime.now()):
 	mon, coun = generateTrailingMonthlyLists(getICRAaddedThisMonth,monthsback,date)
 	generateGraph(mon,coun,'ICRA funds updated/new on siGlobalResearch','ICRA funds updated/new',"./Static/ICRA",monthsback)
 
+#CBSO processing
 
 def getFundManagersLeft():
 	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;Trusted_Connection=yes')
@@ -192,3 +248,25 @@ def getFundManagersLeft():
 	''')
 	result = cursor.fetchall()
 	return result
+
+	#IE processing
+
+def getDuplicateFundCodes():
+	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;Trusted_Connection=yes')
+	cursor = cnxn.cursor()
+	cursor.execute('''
+
+		SELECT Id id, fundId, FUND_CODE fundCode, IFIC_CODE ificCode, SOURCE source FROM [InvestorEconomics].[dbo].[FundCodeMap] 
+		WHERE FUND_CODE IN (SELECT FUND_CODE
+		FROM [InvestorEconomics].[dbo].[FundCodeMap]
+		WHERE FUND_CODE IS NOT null
+		GROUP BY FUND_CODE
+		HAVING COUNT(DISTINCT FundId) >1 )
+		ORDER BY FUND_CODE
+
+	''')
+	results = cursor.fetchall()
+	fundCodes = []
+	for row in results:
+		fundCodes.append([row.id, row.fundId, row.fundCode, row.ificCode])
+	return fundCodes
