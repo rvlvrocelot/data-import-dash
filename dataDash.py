@@ -56,7 +56,7 @@ def ODS():
     NewFundsThisMonth = sum(NewFundsThisMonth)
     SQLHelper.generateAssetGraph(latestAssetDate)
     SQLHelper.generateNewFundsGraph()
-    SQLHelper.generateAssetMonthly(latestAssetDate)
+    #SQLHelper.generateAssetMonthly(latestAssetDate)
 
     f = open("previous.txt","r")
     previous = f.readline()

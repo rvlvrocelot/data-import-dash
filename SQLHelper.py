@@ -6,70 +6,94 @@ import numpy as np
 import matplotlib.pyplot as plt
 import calendar
 import time
+import sqlite3
+import collections
+from operator import itemgetter
 
 cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siVendors;Trusted_Connection=yes')
 cursor = cnxn.cursor()
 
 #generate a bar graph
 
-def generateGraph(x,y,title,ylable,destination,N=9):
+class graph:
+
+
+	colorarray = ['r','b','g','y','c','m']
 	width = .35
-	ind = np.arange(N)
-	fig, ax = plt.subplots()
-	ax.bar(ind, y, width, color='r')
-	ax.set_ylabel(ylable)
-	ax.set_title(title)
-	ax.set_xticks(ind+width)
-	ax.set_xticklabels( x )
-	plt.xticks(rotation=70)
-	plt.gcf().subplots_adjust(bottom=0.15)
-	plt.savefig(destination)
-	plt.clf()
 
-#generate a stack graph
+	def __init__(self,x,y,title,ylable,destination,N=9,legend=None):
+		self.x = x
+		self.y = y
+		self.title = title
+		self.ylable = ylable
+		self.legend = legend
+		self.destination = destination
+		self.N = N
+		self.ind = np.arange(N)
+		self.fig, self.ax = plt.subplots()
+		self.ax.set_ylabel(ylable)
+		self.ax.set_title(title)
+		self.ax.set_xticks(self.ind+self.width)
+		self.ax.set_xticklabels( x )
+		plt.xticks(rotation=70)
+		plt.gcf().subplots_adjust(bottom=0.15)
 
-def generateStackedGraph(x,y,title,ylable,legend,destination,N=9):
-    
-    colorarray = ['r','b','g','y','c','m']
-    
-    width = .35
-    ind = np.arange(N)
-    fig, ax = plt.subplots()
-    bottombar = [0]*len(y[0])
-    barlist =[]
-    
-    for index, bars in enumerate(y):
-        barlist.append(ax.bar(ind, bars, width, color=colorarray[index], bottom = bottombar)[0])
-        bottombar = [i+bars[index] for index,i in enumerate(bottombar)]
-        
-    ax.set_ylabel(ylable)
-    ax.set_title(title)
-    ax.set_xticks(ind+width)
-    ax.set_xticklabels( x )
-    plt.xticks(rotation=70)
-    plt.gcf().subplots_adjust(bottom=0.15)
-    lgd = plt.legend(barlist,legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.savefig(destination, bbox_extra_artists=(lgd,), bbox_inches='tight')
-    plt.clf()
+	def generateGraph(self):
+		self.ax.bar(self.ind, self.y, self.width, color='r')
+		plt.savefig(self.destination)
+		plt.clf()		
+
+	def generateStackedGraph(self):
+		barlist = []
+		bottombar = [0]*len(self.y[0])
+		for index, bars in enumerate(self.y):
+			barlist.append(self.ax.bar(self.ind, bars, self.width, color=self.colorarray[index], bottom = bottombar)[0])
+			bottombar = [i+bars[index] for index,i in enumerate(bottombar)]
+
+		lgd = plt.legend(barlist,self.legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+		plt.savefig(self.destination, bbox_extra_artists=(lgd,), bbox_inches='tight')
+		plt.clf()
 
 #function to generate a trailing monthly list and execute a general query function on those months. Used by most of the processing
 
-def generateTrailingMonthlyLists(QueryFunction,months,date):
-    monthsList = []
-    countlist = []
+def generateTrailingMonthlyLists(name,QueryFunction,months,date):
+	monthsList = []
+	countlist = []
 
-    monthsList.append(date.strftime("%Y%m"))
-    countlist.append(QueryFunction(date))
+	db = sqlite3.connect('C:\\Users\\amahan\\Desktop\\data-import-dash\\dataDash.db')
 
-    for x in range(months - 1):
-        date = date - dateutil.relativedelta.relativedelta(months=1)
-        monthsList.append(str(date.strftime("%Y%m")))
-        countlist.append(QueryFunction(date))
+	for index, record in enumerate(QueryFunction(date)):
+		db.execute('INSERT INTO monthlyData (name, value,date,number) VALUES (?, ?,?,?)',[name, record, str(date.strftime("%Y%m")),index])
+		db.commit()
 
-    countlist.reverse()
-    monthsList.reverse()
+	trailingDate = date - dateutil.relativedelta.relativedelta(months= months -1) 
+	results  = db.execute('''SELECT DISTINCT * FROM monthlyData WHERE name = ? AND date <= ? AND date >= ?  ORDER BY date ASC''', [name, str(date.strftime("%Y%m")), str(trailingDate.strftime("%Y%m"))] )
 
-    return monthsList,countlist    
+
+	# for month in range(20):
+	# 	trailingDate = date - dateutil.relativedelta.relativedelta(months=month)
+	# 	for index, record in enumerate(QueryFunction(trailingDate)):
+	# 		db.execute('INSERT INTO monthlyData (name, value,date,number) VALUES (?, ?,?,?)',[name, record, str(trailingDate.strftime("%Y%m")),index])
+	# 		db.commit() 
+
+	resultsDict = collections.OrderedDict()
+
+	for row in results: 
+		print row
+		if row[2] not in resultsDict:
+			resultsDict[row[2]] = []
+		resultsDict[row[2]].append([row[3],row[1]])
+
+	for key in resultsDict:
+		monthsList.append(key)
+		resultsSet = sorted(resultsDict[key], key=itemgetter(0))
+		resultList = []
+		for count in resultsSet:
+			resultList.append(count[1])
+		countlist.append(resultList)
+
+	print countlist,name
+	return monthsList,countlist    
 
 #ASSET PROCESSING
 
@@ -79,7 +103,7 @@ def getAssetsUpdatedThisMonth(date = datetime.datetime.now()):
 	result = cursor.fetchall()
 
 	for row in result:
-	    return row.count
+	    return [row.count]
 
 def getLatestAssetDate():
 	cursor.execute("SELECT Top 1 PeriodIDCreated FROM LIG.Asset ORDER BY PeriodIDCreated DESC ")
@@ -91,14 +115,14 @@ def getLatestAssetDate():
 def generateAssetGraph(date):
 
 	monthsback = 12
-
-	mon, coun = generateTrailingMonthlyLists(getAssetsUpdatedThisMonth,monthsback,date)
-	generateGraph(mon,coun,'Assets updated per month','Assets updated',"./Static/asset",monthsback)
+	mon, coun = generateTrailingMonthlyLists("Asset",getAssetsUpdatedThisMonth,monthsback,date)
+	coun = [x[0] for x in coun]
+	assetGraph = graph(mon,coun,'Assets updated per month','Assets updated',"./Static/asset",monthsback)
+	assetGraph.generateGraph()
 
 #ASSET THIS MONTH PROCESSING
 
 def generateAssetMonthly(latestAssetDate):
-	print "hey"
 	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siVendors;Trusted_Connection=yes')
 	cursor = cnxn.cursor()
 
@@ -109,11 +133,8 @@ def generateAssetMonthly(latestAssetDate):
 	periodid = latestAssetDate.strftime("%Y%m")
 	print periodid
 	dayrange = calendar.monthrange(year,month)[1]
-
 	
 	for y in range(1,dayrange):
-	           
-
 	    cursor.execute('''
 
 	        SELECT COUNT(*) count FROM siVendors.LIG.Asset
@@ -122,14 +143,12 @@ def generateAssetMonthly(latestAssetDate):
 	        AND dCreated > '%s-%s-%s'
 	        AND dCreated < '%s-%s-%s'
 
-
 	    '''%(periodid,year,month+1,y-1,year,month+1,y))
 	    result = cursor.fetchall()
 	        
 	    for row in result:
 	        assetsUpdatedList.append(row.count)
 	    
-	print assetsUpdatedList
 	xaxis = range(len(assetsUpdatedList))
 	fig, ax = plt.subplots()
 	ax.set_ylabel("Assets updated")
@@ -174,9 +193,11 @@ def getNewFundsThisMonth(d = datetime.datetime.now()):
 
 def generateNewFundsGraph(date = datetime.datetime.now()):
     monthsback = 12
-    mon, coun = generateTrailingMonthlyLists(getNewFundsThisMonth,monthsback,date)
+    mon, coun = generateTrailingMonthlyLists("funds",getNewFundsThisMonth,monthsback,date)
     coun = zip(*coun)
-    generateStackedGraph(mon,coun,"New Funds per month","New funds",["ASIA","OFF","EURO","NA","AUST"],"./Static/newFunds",N=monthsback)
+
+    newFundsGraph = graph(mon,coun,"New Funds per month","New funds","./Static/newFunds",N=monthsback,legend=["ASIA","OFF","EURO","NA","AUST"])
+    newFundsGraph.generateStackedGraph()
 
 
 #ICRA processing
@@ -194,12 +215,16 @@ def getICRAaddedThisMonthRawDB(d = datetime.datetime.now()):
 	result = cursor.fetchall()
 
 	for row in result:
-	    return row.count	
+		return [row.count]
 
 def generateICRAGraphRawDB(date = datetime.datetime.now()):
 	monthsback = 12
-	mon, coun = generateTrailingMonthlyLists(getICRAaddedThisMonthRawDB,monthsback,date)
-	generateGraph(mon,coun,'ICRA funds staged on RawDB','ICRA funds updated',"./Static/ICRARawDB",monthsback)
+	mon, coun = generateTrailingMonthlyLists("ICRARawDB",getICRAaddedThisMonthRawDB,monthsback,date)
+	coun = [x[0] for x in coun]
+	print coun,mon
+	ICRARawDB = graph(mon,coun,'ICRA funds staged on RawDB','ICRA funds updated',"./Static/ICRARawDB",monthsback)
+	ICRARawDB.generateGraph()
+	#generateGraph(mon,coun,'ICRA funds staged on RawDB','ICRA funds updated',"./Static/ICRARawDB",monthsback)
 
 
 def getICRAaddedThisMonth(d = datetime.datetime.now()):
@@ -215,12 +240,15 @@ def getICRAaddedThisMonth(d = datetime.datetime.now()):
 	result = cursor.fetchall()
 
 	for row in result:
-	    return row.count	
+	    return [row.count]	
 
 def generateICRAGraph(date = datetime.datetime.now()):
 	monthsback = 12
-	mon, coun = generateTrailingMonthlyLists(getICRAaddedThisMonth,monthsback,date)
-	generateGraph(mon,coun,'ICRA funds updated/new on siGlobalResearch','ICRA funds updated/new',"./Static/ICRA",monthsback)
+	mon, coun = generateTrailingMonthlyLists("ICRA",getICRAaddedThisMonth,monthsback,date)
+	coun = [x[0] for x in coun]
+	ICRAGraph = graph(mon,coun,'ICRA funds updated/new on siGlobalResearch','ICRA funds updated/new',"./Static/ICRA",monthsback)
+	ICRAGraph.generateGraph()
+	#generateGraph(mon,coun,'ICRA funds updated/new on siGlobalResearch','ICRA funds updated/new',"./Static/ICRA",monthsback)
 
 #CBSO processing
 
