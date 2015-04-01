@@ -17,7 +17,6 @@ cursor = cnxn.cursor()
 
 class graph:
 
-
 	colorarray = ['r','b','g','y','c','m']
 	width = .35
 
@@ -38,12 +37,40 @@ class graph:
 		plt.xticks(rotation=70)
 		plt.gcf().subplots_adjust(bottom=0.15)
 
+	# def generateGraph(self):
+	# 	self.ax.bar(self.ind, self.y, self.width, color='r')
+	# 	plt.savefig(self.destination)
+	# 	plt.clf()		
+
+	# def generateStackedGraph(self):
+	# 	barlist = []
+	# 	bottombar = [0]*len(self.y[0])
+	# 	for index, bars in enumerate(self.y):
+	# 		barlist.append(self.ax.bar(self.ind, bars, self.width, color=self.colorarray[index], bottom = bottombar)[0])
+	# 		bottombar = [i+bars[index] for index,i in enumerate(bottombar)]
+
+	# 	lgd = plt.legend(barlist,self.legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+	# 	plt.savefig(self.destination, bbox_extra_artists=(lgd,), bbox_inches='tight')
+	# 	plt.clf()
+
+class barGraph(graph):
+
+	def __init__(self,x,y,title,ylable,destination,N=9,legend=None):
+		graph.__init__(self,x,y,title,ylable,destination,N,legend)
+
 	def generateGraph(self):
+		print self.x,self.y,self.title,self.ylable,self.destination,self.N
 		self.ax.bar(self.ind, self.y, self.width, color='r')
 		plt.savefig(self.destination)
-		plt.clf()		
+		plt.clf()
 
-	def generateStackedGraph(self):
+class stackedBarGraph(graph):
+
+	def __init__(self,x,y,title,ylable,destination,N=9,legend=None):
+		graph.__init__(self,x,y,title,ylable,destination,N,legend)
+
+
+	def generateGraph(self):
 		barlist = []
 		bottombar = [0]*len(self.y[0])
 		for index, bars in enumerate(self.y):
@@ -52,7 +79,7 @@ class graph:
 
 		lgd = plt.legend(barlist,self.legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 		plt.savefig(self.destination, bbox_extra_artists=(lgd,), bbox_inches='tight')
-		plt.clf()
+		plt.clf()				
 
 #function to generate a trailing monthly list and execute a general query function on those months. Used by most of the processing
 
@@ -117,7 +144,7 @@ def generateAssetGraph(date):
 	monthsback = 12
 	mon, coun = generateTrailingMonthlyLists("Asset",getAssetsUpdatedThisMonth,monthsback,date)
 	coun = [x[0] for x in coun]
-	assetGraph = graph(mon,coun,'Assets updated per month','Assets updated',"./Static/asset",monthsback)
+	assetGraph = barGraph(mon,coun,'Assets updated per month','Assets updated',"./Static/asset",N=monthsback)
 	assetGraph.generateGraph()
 
 #ASSET THIS MONTH PROCESSING
@@ -196,8 +223,8 @@ def generateNewFundsGraph(date = datetime.datetime.now()):
     mon, coun = generateTrailingMonthlyLists("funds",getNewFundsThisMonth,monthsback,date)
     coun = zip(*coun)
 
-    newFundsGraph = graph(mon,coun,"New Funds per month","New funds","./Static/newFunds",N=monthsback,legend=["ASIA","OFF","EURO","NA","AUST"])
-    newFundsGraph.generateStackedGraph()
+    newFundsGraph = stackedBarGraph(mon,coun,"New Funds per month","New funds","./Static/newFunds",N=monthsback,legend=["ASIA","OFF","EURO","NA","AUST"])
+    newFundsGraph.generateGraph()
 
 
 #ICRA processing
@@ -222,7 +249,7 @@ def generateICRAGraphRawDB(date = datetime.datetime.now()):
 	mon, coun = generateTrailingMonthlyLists("ICRARawDB",getICRAaddedThisMonthRawDB,monthsback,date)
 	coun = [x[0] for x in coun]
 	print coun,mon
-	ICRARawDB = graph(mon,coun,'ICRA funds staged on RawDB','ICRA funds updated',"./Static/ICRARawDB",monthsback)
+	ICRARawDB = barGraph(mon,coun,'ICRA funds staged on RawDB','ICRA funds updated',"./Static/ICRARawDB",monthsback)
 	ICRARawDB.generateGraph()
 	#generateGraph(mon,coun,'ICRA funds staged on RawDB','ICRA funds updated',"./Static/ICRARawDB",monthsback)
 
@@ -246,7 +273,7 @@ def generateICRAGraph(date = datetime.datetime.now()):
 	monthsback = 12
 	mon, coun = generateTrailingMonthlyLists("ICRA",getICRAaddedThisMonth,monthsback,date)
 	coun = [x[0] for x in coun]
-	ICRAGraph = graph(mon,coun,'ICRA funds updated/new on siGlobalResearch','ICRA funds updated/new',"./Static/ICRA",monthsback)
+	ICRAGraph = barGraph(mon,coun,'ICRA funds updated/new on siGlobalResearch','ICRA funds updated/new',"./Static/ICRA",monthsback)
 	ICRAGraph.generateGraph()
 	#generateGraph(mon,coun,'ICRA funds updated/new on siGlobalResearch','ICRA funds updated/new',"./Static/ICRA",monthsback)
 
