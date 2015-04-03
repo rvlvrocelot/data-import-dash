@@ -37,23 +37,9 @@ class graph:
 		plt.xticks(rotation=70)
 		plt.gcf().subplots_adjust(bottom=0.15)
 
-	# def generateGraph(self):
-	# 	self.ax.bar(self.ind, self.y, self.width, color='r')
-	# 	plt.savefig(self.destination)
-	# 	plt.clf()		
-
-	# def generateStackedGraph(self):
-	# 	barlist = []
-	# 	bottombar = [0]*len(self.y[0])
-	# 	for index, bars in enumerate(self.y):
-	# 		barlist.append(self.ax.bar(self.ind, bars, self.width, color=self.colorarray[index], bottom = bottombar)[0])
-	# 		bottombar = [i+bars[index] for index,i in enumerate(bottombar)]
-
-	# 	lgd = plt.legend(barlist,self.legend,bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-	# 	plt.savefig(self.destination, bbox_extra_artists=(lgd,), bbox_inches='tight')
-	# 	plt.clf()
-
 class barGraph(graph):
+
+	print "barGraph"
 
 	def __init__(self,x,y,title,ylable,destination,N=9,legend=None):
 		graph.__init__(self,x,y,title,ylable,destination,N,legend)
@@ -65,6 +51,8 @@ class barGraph(graph):
 		plt.clf()
 
 class stackedBarGraph(graph):
+
+	print "stackedBarGraph"
 
 	def __init__(self,x,y,title,ylable,destination,N=9,legend=None):
 		graph.__init__(self,x,y,title,ylable,destination,N,legend)
@@ -84,23 +72,27 @@ class stackedBarGraph(graph):
 #function to generate a trailing monthly list and execute a general query function on those months. Used by most of the processing
 
 def generateTrailingMonthlyLists(name,QueryFunction,months,date):
+
+	print "generateTrailingMonthlyLists", name
+
 	monthsList = []
 	countlist = []
 
 	db = sqlite3.connect('C:\\Users\\amahan\\Desktop\\data-import-dash\\dataDash.db')
 
 	for index, record in enumerate(QueryFunction(date)):
-		db.execute('INSERT INTO monthlyData (name, value,date,number) VALUES (?, ?,?,?)',[name, record, str(date.strftime("%Y%m")),index])
+		db.execute('INSERT OR REPLACE INTO monthlyData (name, value,date,number,id) VALUES (?, ?,?,?,?)',[name, record, str(date.strftime("%Y%m")),index,name+str(date.strftime("%Y%m"))+str(index)])
 		db.commit()
 
 	trailingDate = date - dateutil.relativedelta.relativedelta(months= months -1) 
 	results  = db.execute('''SELECT DISTINCT * FROM monthlyData WHERE name = ? AND date <= ? AND date >= ?  ORDER BY date ASC''', [name, str(date.strftime("%Y%m")), str(trailingDate.strftime("%Y%m"))] )
 
 
-	# for month in range(20):
+	# for month in range(1,20):
 	# 	trailingDate = date - dateutil.relativedelta.relativedelta(months=month)
 	# 	for index, record in enumerate(QueryFunction(trailingDate)):
-	# 		db.execute('INSERT INTO monthlyData (name, value,date,number) VALUES (?, ?,?,?)',[name, record, str(trailingDate.strftime("%Y%m")),index])
+	# 		print name+str(trailingDate.strftime("%Y%m"))+str(index)
+	# 		db.execute('INSERT INTO monthlyData (name, value,date,number,id) VALUES (?, ?,?,?,?)',[name, record, str(trailingDate.strftime("%Y%m")),index,name+str(trailingDate.strftime("%Y%m"))+str(index)])
 	# 		db.commit() 
 
 	resultsDict = collections.OrderedDict()
@@ -119,12 +111,15 @@ def generateTrailingMonthlyLists(name,QueryFunction,months,date):
 			resultList.append(count[1])
 		countlist.append(resultList)
 
-	print countlist,name
+	print monthsList
 	return monthsList,countlist    
 
 #ASSET PROCESSING
 
 def getAssetsUpdatedThisMonth(date = datetime.datetime.now()):
+
+	print "getAssetsUpdateThisMonth"
+
 	date = date.strftime("%Y%m")
 	cursor.execute("SELECT count(*) count FROM LIG.Asset WHERE PeriodIDCreated = '%s' AND AssetValue IS NOT NULL "%date)
 	result = cursor.fetchall()
@@ -133,6 +128,9 @@ def getAssetsUpdatedThisMonth(date = datetime.datetime.now()):
 	    return [row.count]
 
 def getLatestAssetDate():
+
+	print "getLatestAssetDate"
+
 	cursor.execute("SELECT Top 1 PeriodIDCreated FROM LIG.Asset ORDER BY PeriodIDCreated DESC ")
 	result = cursor.fetchall()
 
@@ -140,6 +138,8 @@ def getLatestAssetDate():
 	    return datetime.datetime.strptime(str(row.PeriodIDCreated), "%Y%m")
 
 def generateAssetGraph(date):
+
+	print "generateAssetGraph"
 
 	monthsback = 12
 	mon, coun = generateTrailingMonthlyLists("Asset",getAssetsUpdatedThisMonth,monthsback,date)
@@ -150,6 +150,9 @@ def generateAssetGraph(date):
 #ASSET THIS MONTH PROCESSING
 
 def generateAssetMonthly(latestAssetDate):
+
+	print "generateAssetMonthly"
+
 	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siVendors;Trusted_Connection=yes')
 	cursor = cnxn.cursor()
 
@@ -188,6 +191,9 @@ def generateAssetMonthly(latestAssetDate):
 #NEW FUND PROCESSING
 
 def getNewFundsThisMonth(d = datetime.datetime.now()):
+
+    print "getNewFundsThisMonth"
+
     cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siGlobalResearch;Trusted_Connection=yes')
     cursor = cnxn.cursor()
     d = d.replace(day = 1)
@@ -212,6 +218,8 @@ def getNewFundsThisMonth(d = datetime.datetime.now()):
         
         '''% (str(d), str(d2), region))
         result = cursor.fetchall()
+
+        print d,d2,region
         
         for row in result:
              returnList.append(row.count)
@@ -219,6 +227,9 @@ def getNewFundsThisMonth(d = datetime.datetime.now()):
     return returnList
 
 def generateNewFundsGraph(date = datetime.datetime.now()):
+
+    print "generateNewFundsGraph"
+
     monthsback = 12
     mon, coun = generateTrailingMonthlyLists("funds",getNewFundsThisMonth,monthsback,date)
     coun = zip(*coun)
@@ -230,6 +241,9 @@ def generateNewFundsGraph(date = datetime.datetime.now()):
 #ICRA processing
 
 def getICRAaddedThisMonthRawDB(d = datetime.datetime.now()):
+
+	print "getICRAaddedThisMonthRawDB"
+
 	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=RawDB;Trusted_Connection=yes')
 	cursor = cnxn.cursor()
 	d = d.replace(day = 1)
@@ -245,6 +259,9 @@ def getICRAaddedThisMonthRawDB(d = datetime.datetime.now()):
 		return [row.count]
 
 def generateICRAGraphRawDB(date = datetime.datetime.now()):
+
+	print "generateICRAGraphRawDB"
+
 	monthsback = 12
 	mon, coun = generateTrailingMonthlyLists("ICRARawDB",getICRAaddedThisMonthRawDB,monthsback,date)
 	coun = [x[0] for x in coun]
@@ -255,6 +272,9 @@ def generateICRAGraphRawDB(date = datetime.datetime.now()):
 
 
 def getICRAaddedThisMonth(d = datetime.datetime.now()):
+
+	print "getICRAaddedThisMonth"
+
 	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siGlobalResearch;Trusted_Connection=yes')
 	cursor = cnxn.cursor()
 	d = d.replace(day = 1)
@@ -270,6 +290,9 @@ def getICRAaddedThisMonth(d = datetime.datetime.now()):
 	    return [row.count]	
 
 def generateICRAGraph(date = datetime.datetime.now()):
+
+	print "generateICRAGraph"
+
 	monthsback = 12
 	mon, coun = generateTrailingMonthlyLists("ICRA",getICRAaddedThisMonth,monthsback,date)
 	coun = [x[0] for x in coun]
