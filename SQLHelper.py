@@ -9,6 +9,7 @@ import time
 import sqlite3
 import collections
 from operator import itemgetter
+import querpy
 
 cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siVendors;Trusted_Connection=yes')
 cursor = cnxn.cursor()
@@ -178,6 +179,8 @@ def generateAssetMonthly(latestAssetDate):
 	        
 	    for row in result:
 	        assetsUpdatedList.append(row.count)
+
+	print assetsUpdatedList
 	    
 	xaxis = range(len(assetsUpdatedList))
 	fig, ax = plt.subplots()
@@ -186,7 +189,6 @@ def generateAssetMonthly(latestAssetDate):
 	ax.set_title("Assets updated by day this month")
 	plt.plot(xaxis, assetsUpdatedList, '-o')
 	plt.savefig("./Static/assetMonth")
-
 
 #NEW FUND PROCESSING
 
@@ -326,6 +328,41 @@ def getFundManagersLeft():
 	''')
 	result = cursor.fetchall()
 	return result
+
+def getMarkets():
+	markets = []
+	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;Trusted_Connection=yes')
+	cursor = cnxn.cursor()
+	cursor.execute("SELECT DISTINCT OriginationMarket market FROM Vendors.CBSO.OriginationMaster")
+	result = cursor.fetchall()
+	for row in result:
+		markets.append(row.market)
+	return markets
+
+def getManagers():
+	managers = []
+	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;Trusted_Connection=yes')
+	cursor = cnxn.cursor()
+	cursor.execute("SELECT DISTINCT ParticipantName manager FROM Vendors.CBSO.OriginationMaster")
+	result = cursor.fetchall()
+	for row in result:
+		managers.append(row.manager)
+	return managers
+
+
+def generateCBSOGraph(type,value, variables):
+	print type,value,variables
+	newQuery = querpy.Query()
+	newQuery.f += "Vendors.CBSO.OriginationMaster"
+	newQuery.g += "periodID"
+	newQuery.w += "{theName} = '{theValue}'".format(theName=type, theValue=value)
+
+	for variable in variables:
+		newQuery.s.clear()
+		newQuery.s += "periodid, SUM({type})".format(type = variable)
+
+		print newQuery
+
 
 	#IE processing
 

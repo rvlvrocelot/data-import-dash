@@ -56,7 +56,7 @@ def ODS():
     NewFundsThisMonth = sum(NewFundsThisMonth)
     SQLHelper.generateAssetGraph(latestAssetDate)
     SQLHelper.generateNewFundsGraph()
-    #SQLHelper.generateAssetMonthly(latestAssetDate)
+    SQLHelper.generateAssetMonthly(latestAssetDate)
 
     f = open("previous.txt","r")
     previous = f.readline()
@@ -79,7 +79,21 @@ def ICRA():
 @app.route('/CBSO')
 def CBSO():
     managersLeft = SQLHelper.getFundManagersLeft()
-    return render_template('CBSO.html', managersLeft=managersLeft)
+    markets = SQLHelper.getMarkets()
+    managers = SQLHelper.getManagers()
+    return render_template('CBSO.html', managersLeft=managersLeft, markets = markets, managers= managers)
+
+@app.route('/generateCBSOGraph', methods=['POST'])
+def CBSOGraph():
+
+    if request.form["state"] == "manager":
+        SQLHelper.generateCBSOGraph("ParticipantName",request.form["managerName"],request.form.getlist('variables'))
+
+    if request.form["state"] == "market":
+        SQLHelper.generateCBSOGraph("OriginationMarket",request.form["marketName"],request.form.getlist('variables'))
+
+    return redirect("CBSO")
+
 
 @app.route('/IE')
 def IE():

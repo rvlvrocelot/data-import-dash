@@ -4,6 +4,26 @@
 
 <br><br><br>
 
+   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+
+    <script>
+        $(document).ready(function (){
+            $("#state").change(function() {
+                // foo is the id of the other select box 
+                if ($(this).val() == "manager") {
+                    $("#manager").show();
+                }else{
+                    $("#manager").hide();
+                } 
+                if ($(this).val() == "market") {
+                    $("#market").show();
+                }else{
+                    $("#market").hide();
+                } 
+
+            });
+        });
+    </script>
 
 <h1>CBSO</h1>
 
@@ -22,7 +42,45 @@
 
 <div class="col-md-6">
 
-	Other stuff I guess
+	<h2>Time Series Graph</h2>
+
+	<img src = "/static/CBSO.png" width="500">
+
+	<form action="/generateCBSOGraph" method=post class=add-entry>
+
+    <p>
+        <select id="state" name="state" style="width: 212px;">
+            <option value="manager">Manager</option>
+            <option value="market">Origination Market</option>
+            <option value="vic">Sales Channel</option>
+            <option value="nt">Sales Type</option>
+        </select>
+    </p>
+
+    <p id="manager">
+
+        <select name="managerName" style="width: 212px;">
+        	{%for manager in managers %}
+        		<option value="{{manager}}">{{manager}}</option>
+        	{% endfor %}
+        </select>
+
+    <p id="market" style="display:none;">
+        <select name="marketName" style="width: 212px;">
+        	{%for market in markets %}
+        		<option value="{{market}}">{{market}}</option>
+        	{% endfor %}
+        </select>
+    </p>
+
+    <select name="variables" multiple>
+		<option value="assets">Assets</option>
+		<option value="grossSales">GrossSales</option>
+		<option value="netSales">NetSales</option>
+	</select>   
+
+    <input type="submit" value="Submit">
+</form>
 
 </div>
 
