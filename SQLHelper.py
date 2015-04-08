@@ -10,6 +10,9 @@ import sqlite3
 import collections
 from operator import itemgetter
 import querpy
+import seaborn as sns
+import pandas as pd
+import os
 
 cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;DATABASE=siVendors;Trusted_Connection=yes')
 cursor = cnxn.cursor()
@@ -31,12 +34,9 @@ class graph:
 		self.N = N
 		self.ind = np.arange(N)
 		self.fig, self.ax = plt.subplots()
-		self.ax.set_ylabel(ylable)
-		self.ax.set_title(title)
-		self.ax.set_xticks(self.ind+self.width)
-		self.ax.set_xticklabels( x )
-		plt.xticks(rotation=70)
 		plt.gcf().subplots_adjust(bottom=0.15)
+		sns.set(font_scale=1.5)
+		os.remove(destination+".png")
 
 class barGraph(graph):
 
@@ -46,8 +46,11 @@ class barGraph(graph):
 		graph.__init__(self,x,y,title,ylable,destination,N,legend)
 
 	def generateGraph(self):
+
 		print self.x,self.y,self.title,self.ylable,self.destination,self.N
-		self.ax.bar(self.ind, self.y, self.width, color='r')
+		d = {'PeriodID': self.x, 'Asset': self.y}
+		df = pd.DataFrame(data=d)
+		sns.factorplot("PeriodID","Asset", data=df, palette="BuPu", size=6, aspect=1.5, kind="bar").set_xticklabels(rotation=70).set_titles(self.title).set_ylabels(self.ylable)
 		plt.savefig(self.destination)
 		plt.clf()
 
@@ -57,6 +60,11 @@ class stackedBarGraph(graph):
 
 	def __init__(self,x,y,title,ylable,destination,N=9,legend=None):
 		graph.__init__(self,x,y,title,ylable,destination,N,legend)
+		self.ax.set_ylabel(ylable)
+		self.ax.set_title(title)
+		self.ax.set_xticks(self.ind+self.width)
+		self.ax.set_xticklabels( x )
+		plt.xticks(rotation=70)
 
 
 	def generateGraph(self):
@@ -351,18 +359,37 @@ def getManagers():
 
 
 def generateCBSOGraph(type,value, variables):
+
+	cnxn = po.connect('DRIVER={SQL Server Native Client 10.0};SERVER=GLDB;Trusted_Connection=yes')
+	cursor = cnxn.cursor()
+
 	print type,value,variables
 	newQuery = querpy.Query()
 	newQuery.f += "Vendors.CBSO.OriginationMaster"
 	newQuery.g += "periodID"
 	newQuery.w += "{theName} = '{theValue}'".format(theName=type, theValue=value)
 
+	mon = []
+	coun = []
+
 	for variable in variables:
 		newQuery.s.clear()
-		newQuery.s += "periodid, SUM({type})".format(type = variable)
+		newQuery.s += "periodid periodID, SUM({type}) value".format(type = variable)
 
 		print newQuery
+		cursor.execute(str(newQuery))
+		result = cursor.fetchall()
+		for row in result:
+			mon.append(row.periodID)
+			if row.value == None:
+				row.value = 0
+			coun.append(float(row.value)/1000000000)
 
+	coun = coun[-24:]
+	mon = mon[-24:]
+
+	CBSOGraph = barGraph(mon,coun,'CBSO {type} for {agg}'.format(type = variable, agg = value),'{type}'.format(type = variable),"./Static/CBSO",len(coun))
+	CBSOGraph.generateGraph()
 
 	#IE processing
 
