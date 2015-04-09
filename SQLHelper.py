@@ -34,9 +34,10 @@ class graph:
 		self.N = N
 		self.ind = np.arange(N)
 		self.fig, self.ax = plt.subplots()
+		self.fig.suptitle('test title')
 		plt.gcf().subplots_adjust(bottom=0.15)
 		sns.set(font_scale=1.5)
-		os.remove(destination+".png")
+		#os.remove(destination+".png")
 
 class barGraph(graph):
 
@@ -50,9 +51,35 @@ class barGraph(graph):
 		print self.x,self.y,self.title,self.ylable,self.destination,self.N
 		d = {'PeriodID': self.x, 'Asset': self.y}
 		df = pd.DataFrame(data=d)
-		sns.factorplot("PeriodID","Asset", data=df, palette="BuPu", size=6, aspect=1.5, kind="bar").set_xticklabels(rotation=70).set_titles(self.title).set_ylabels(self.ylable)
-		plt.savefig(self.destination)
+		g = sns.factorplot("PeriodID","Asset", data=df, palette="BuPu", kind="bar", size=6, aspect=1.5)
+		g.set_xticklabels(rotation=70)
+		g.set_ylabels(self.ylable)
+		g.set_titles(self.title)
+		titles = [self.title]
+		for ax, title in zip(g.axes.flat, titles):
+			ax.set_title(title)
+		plt.savefig(self.destination, bbox_inches='tight')
 		plt.clf()
+
+class lineGraph(graph):
+
+	def __init__(self,x,y,title,ylable,destination,N=9,legend=None):
+		graph.__init__(self,x,y,title,ylable,destination,N,legend)
+
+	def generateGraph(self):
+
+		print self.x,self.y,self.title,self.ylable,self.destination,self.N
+		d = {'PeriodID': self.x, 'Asset': self.y}
+		df = pd.DataFrame(data=d)
+		g = sns.factorplot("PeriodID","Asset", data=df, size=6, aspect=1.5)
+		g.set_xticklabels(rotation=70)
+		g.set_ylabels(self.ylable)
+		titles = [self.title]
+		for ax, title in zip(g.axes.flat, titles):
+			ax.set_title(title)
+		plt.savefig(self.destination, bbox_inches='tight')
+		plt.clf()
+
 
 class stackedBarGraph(graph):
 
@@ -247,7 +274,6 @@ def generateNewFundsGraph(date = datetime.datetime.now()):
     newFundsGraph = stackedBarGraph(mon,coun,"New Funds per month","New funds","./Static/newFunds",N=monthsback,legend=["ASIA","OFF","EURO","NA","AUST"])
     newFundsGraph.generateGraph()
 
-
 #ICRA processing
 
 def getICRAaddedThisMonthRawDB(d = datetime.datetime.now()):
@@ -388,7 +414,7 @@ def generateCBSOGraph(type,value, variables):
 	coun = coun[-24:]
 	mon = mon[-24:]
 
-	CBSOGraph = barGraph(mon,coun,'CBSO {type} for {agg}'.format(type = variable, agg = value),'{type}'.format(type = variable),"./Static/CBSO",len(coun))
+	CBSOGraph = lineGraph(mon,coun,'CBSO {type} for {agg}'.format(type = variable, agg = value),'{type}'.format(type = variable),"./Static/CBSO",len(coun))
 	CBSOGraph.generateGraph()
 
 	#IE processing

@@ -49,7 +49,6 @@ def teardown_request(exception):
 #Load the homepage where the announcements are displayed
 @app.route('/')
 def ODS():
-
     latestAssetDate = SQLHelper.getLatestAssetDate()
     AssetsUpdatedThisMonth = SQLHelper.getAssetsUpdatedThisMonth(latestAssetDate)
     NewFundsThisMonth = SQLHelper.getNewFundsThisMonth()   
@@ -99,8 +98,7 @@ def CBSOGraph():
 def IE():
     fundCodes = SQLHelper.getDuplicateFundCodes()
     return render_template('IE.html',fundCodes=fundCodes)
-
-
+    
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
 
