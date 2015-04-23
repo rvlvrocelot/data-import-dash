@@ -4,10 +4,15 @@
 
 <br><br><br>
 
+
+
+
    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
 
+    {%if refresh == True %} <script> location.reload(); </script>{%endif%}
+
     <script>
-        $(document).ready(function (){
+        $( window ).load(function (){
             $("#state").change(function() {
                 // foo is the id of the other select box 
                 if ($(this).val() == "manager") {
@@ -40,45 +45,46 @@
 	</ul>
 </div>
 
+
 <div class="col-md-6">
 
 	<h2>Time Series Graph</h2>
 
-	<img src = "/static/CBSO.png" width="500">
+	<img src = "/static/CBSO.png?v={{hack}}" width="500">
 
     <br><br>
 
 	<form action="/generateCBSOGraph" method=post class=add-entry>
 
     <p>
-        <select id="state" name="state" style="width: 212px;">
-            <option value="manager">Manager</option>
-            <option value="market">Origination Market</option>
-            <option value="vic">Sales Channel</option>
-            <option value="nt">Sales Type</option>
+        <select id="state" name="state" style="width: 212px;" >
+            <option value="manager" {%if session.state == "manager"%} selected {%endif%} >Manager</option>
+            <option value="market" {%if session.state == "market"%} selected {%endif%} >Origination Market</option>
+            <option value="vic" {%if session.state == "vic"%} selected {%endif%} >Sales Channel</option>
+            <option value="nt" {%if session.state == "nt"%} selected {%endif%}  >Sales Type</option>
         </select>
     </p>
 
-    <p id="manager">
+    <p id="manager" {%if session.state == "market"%} hidden {%endif%} >
 
-        <select name="managerName" style="width: 212px;">
+        <select id = "managerName" name="managerName" style="width: 212px;" >
         	{%for manager in managers %}
-        		<option value="{{manager}}">{{manager}}</option>
+        		<option value="{{manager}}" {%if session.manager == manager %} selected {%endif%}  >{{manager}}</option>
         	{% endfor %}
         </select>
 
-    <p id="market" style="display:none;">
-        <select name="marketName" style="width: 212px;">
+    <p id="market" {%if session.state == "manager"%} hidden {%endif%} >
+        <select id = "marketName" name="marketName" style="width: 212px;" selected = {{session.market}}>
         	{%for market in markets %}
-        		<option value="{{market}}">{{market}}</option>
+        		<option value="{{market}}" {%if session.market == market %} selected {%endif%} >{{market}}</option>
         	{% endfor %}
         </select>
     </p>
 
     <select name="variables" multiple>
-		<option value="assets">Assets</option>
-		<option value="grossSales">GrossSales</option>
-		<option value="netSales">NetSales</option>
+		<option value="assets" {%if "assets" in session.variables %} selected {%endif%}>Assets</option>
+		<option value="grossSales" {%if "grossSales" in session.variables %} selected {%endif%} >GrossSales</option>
+		<option value="netSales" {%if "netSales" in session.variables %} selected {%endif%} >NetSales</option>
 	</select>   
 
     <input type="submit" value="Submit">

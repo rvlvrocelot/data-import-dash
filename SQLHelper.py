@@ -68,15 +68,25 @@ class lineGraph(graph):
 
 	def generateGraph(self):
 
-		print self.x,self.y,self.title,self.ylable,self.destination,self.N
-		d = {'PeriodID': self.x, 'Asset': self.y}
-		df = pd.DataFrame(data=d)
-		g = sns.factorplot("PeriodID","Asset", data=df, size=6, aspect=1.5)
+		finalFrame = pd.DataFrame()
+
+		for i,attr in enumerate(self.legend):
+			tempDict = {"PeriodID":self.x, '10^9 Dollars': self.y[i], 'attr':[attr]*len(self.x)}
+			tempFrame = pd.DataFrame(tempDict)
+			finalFrame = pd.concat([finalFrame, tempFrame], ignore_index=True)
+    
+		g = sns.factorplot("PeriodID", "10^9 Dollars", hue="attr", data=finalFrame,
+               hue_order= self.legend,
+               palette="YlGnBu_d", row = "attr", kind="point",legend_out=False,aspect=1.5, sharey=False,margin_titles=True)
 		g.set_xticklabels(rotation=70)
-		g.set_ylabels(self.ylable)
 		titles = [self.title]
 		for ax, title in zip(g.axes.flat, titles):
 			ax.set_title(title)
+
+		if "assets" in self.legend:
+			g.axes[0,0].set_ylim(0,)
+
+
 		plt.savefig(self.destination, bbox_inches='tight')
 		plt.clf()
 
@@ -397,24 +407,30 @@ def generateCBSOGraph(type,value, variables):
 
 	mon = []
 	coun = []
+	legendList = []
 
 	for variable in variables:
+		legendList.append(variable)
 		newQuery.s.clear()
 		newQuery.s += "periodid periodID, SUM({type}) value".format(type = variable)
 
-		print newQuery
+		tempCoun = []
+
 		cursor.execute(str(newQuery))
 		result = cursor.fetchall()
 		for row in result:
-			mon.append(row.periodID)
+			if row.periodID not in mon: mon.append(row.periodID)
 			if row.value == None:
 				row.value = 0
-			coun.append(float(row.value)/1000000000)
+			tempCoun.append(float(row.value)/1000000000)
+
+		tempCoun = tempCoun[-24:]
+		coun.append(tempCoun)
 
 	coun = coun[-24:]
 	mon = mon[-24:]
 
-	CBSOGraph = lineGraph(mon,coun,'CBSO {type} for {agg}'.format(type = variable, agg = value),'{type}'.format(type = variable),"./Static/CBSO",len(coun))
+	CBSOGraph = lineGraph(mon,coun,'CBSO data for {agg}'.format(type = variable, agg = value),'{type}'.format(type = variable),"./Static/CBSO",len(coun),legend=legendList)
 	CBSOGraph.generateGraph()
 
 	#IE processing
